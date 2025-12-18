@@ -5,7 +5,17 @@ Server that receives encrypted messages and decrypts them
 import socket
 import json
 import numpy as np
-from cipher_utils import caesar_decrypt, hill_decrypt, vigenere_decrypt
+from cipher_utils import (
+    caesar_decrypt,
+    hill_decrypt,
+    vigenere_decrypt,
+    vernam_decrypt,
+    playfair_decrypt,
+    route_decrypt,
+    affine_decrypt,
+    rail_fence_decrypt,
+    columnar_decrypt,
+)
 
 
 def parse_hill_key(key_str):
@@ -46,6 +56,24 @@ def decrypt_message(encrypted_message, cipher_type, key):
         
         elif cipher_type.lower() == 'vigenere':
             return vigenere_decrypt(encrypted_message, key)
+
+        elif cipher_type.lower() == 'vernam':
+            return vernam_decrypt(encrypted_message, key)
+
+        elif cipher_type.lower() == 'playfair':
+            return playfair_decrypt(encrypted_message, key)
+
+        elif cipher_type.lower() == 'route':
+            return route_decrypt(encrypted_message, key)
+
+        elif cipher_type.lower() == 'affine':
+            return affine_decrypt(encrypted_message, key)
+
+        elif cipher_type.lower() == 'rail_fence':
+            return rail_fence_decrypt(encrypted_message, key)
+
+        elif cipher_type.lower() == 'columnar':
+            return columnar_decrypt(encrypted_message, key)
         
         else:
             return f"Error: Unknown cipher type '{cipher_type}'"

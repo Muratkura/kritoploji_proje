@@ -22,6 +22,36 @@ function updateKeyInput(tab) {
         keyInput.type = 'text';
         keyInput.placeholder = 'Anahtar kelime girin (örn: ANAHTAR)';
         keyHint.textContent = 'Anahtar kelime dizisi girin (örn: ANAHTAR)';
+    } else if (cipherType === 'vernam') {
+        keyLabel.textContent = 'Anahtar (Harf Dizisi):';
+        keyInput.type = 'text';
+        keyInput.placeholder = 'Örn: SECRET';
+        keyHint.textContent = 'Harflerden oluşan bir anahtar girin. Harf dışı karakterler yok sayılır.';
+    } else if (cipherType === 'playfair') {
+        keyLabel.textContent = 'Anahtar Kelime:';
+        keyInput.type = 'text';
+        keyInput.placeholder = 'Örn: MONARCHY';
+        keyHint.textContent = 'Playfair için anahtar kelime girin (I/J birleştirilir).';
+    } else if (cipherType === 'route') {
+        keyLabel.textContent = 'Sütun Sayısı (Tam Sayı):';
+        keyInput.type = 'text';
+        keyInput.placeholder = 'Örn: 5';
+        keyHint.textContent = 'Route için sütun sayısı girin (örn: 5).';
+    } else if (cipherType === 'affine') {
+        keyLabel.textContent = 'Anahtar (a,b):';
+        keyInput.type = 'text';
+        keyInput.placeholder = 'Örn: 5,8';
+        keyHint.textContent = "Affine için 'a,b' girin. gcd(a,26)=1 olmalı (örn: 5,8).";
+    } else if (cipherType === 'rail_fence') {
+        keyLabel.textContent = 'Ray Sayısı (Tam Sayı):';
+        keyInput.type = 'text';
+        keyInput.placeholder = 'Örn: 3';
+        keyHint.textContent = 'Rail Fence için ray sayısı girin (>=2).';
+    } else if (cipherType === 'columnar') {
+        keyLabel.textContent = 'Anahtar Kelime:';
+        keyInput.type = 'text';
+        keyInput.placeholder = 'Örn: ZEBRA';
+        keyHint.textContent = 'Columnar için anahtar kelime girin (en az 2 karakter).';
     }
 }
 

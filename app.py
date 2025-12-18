@@ -6,7 +6,17 @@ from flask import Flask, render_template, request, jsonify
 import numpy as np
 import json
 import re
-from cipher_utils import caesar_encrypt, caesar_decrypt, hill_encrypt, hill_decrypt, vigenere_encrypt, vigenere_decrypt
+from cipher_utils import (
+    caesar_encrypt, caesar_decrypt,
+    hill_encrypt, hill_decrypt,
+    vigenere_encrypt, vigenere_decrypt,
+    vernam_encrypt, vernam_decrypt,
+    playfair_encrypt, playfair_decrypt,
+    route_encrypt, route_decrypt,
+    affine_encrypt, affine_decrypt,
+    rail_fence_encrypt, rail_fence_decrypt,
+    columnar_encrypt, columnar_decrypt
+)
 
 app = Flask(__name__)
 
@@ -67,6 +77,54 @@ def encrypt():
                 encrypted = vigenere_encrypt(message, key)
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'vernam':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Vernam cipher'}), 400
+            try:
+                encrypted = vernam_encrypt(message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'playfair':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Playfair cipher'}), 400
+            try:
+                encrypted = playfair_encrypt(message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'route':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Route cipher'}), 400
+            try:
+                encrypted = route_encrypt(message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'affine':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Affine cipher'}), 400
+            try:
+                encrypted = affine_encrypt(message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'rail_fence':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Rail Fence cipher'}), 400
+            try:
+                encrypted = rail_fence_encrypt(message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'columnar':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Columnar cipher'}), 400
+            try:
+                encrypted = columnar_encrypt(message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
         
         else:
             return jsonify({'error': f'Unknown cipher type: {cipher_type}'}), 400
@@ -112,6 +170,54 @@ def decrypt():
                 return jsonify({'error': 'Key cannot be empty for Vigenere cipher'}), 400
             try:
                 decrypted = vigenere_decrypt(encrypted_message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'vernam':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Vernam cipher'}), 400
+            try:
+                decrypted = vernam_decrypt(encrypted_message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'playfair':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Playfair cipher'}), 400
+            try:
+                decrypted = playfair_decrypt(encrypted_message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'route':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Route cipher'}), 400
+            try:
+                decrypted = route_decrypt(encrypted_message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'affine':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Affine cipher'}), 400
+            try:
+                decrypted = affine_decrypt(encrypted_message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'rail_fence':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Rail Fence cipher'}), 400
+            try:
+                decrypted = rail_fence_decrypt(encrypted_message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'columnar':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for Columnar cipher'}), 400
+            try:
+                decrypted = columnar_decrypt(encrypted_message, key)
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
         

@@ -5,7 +5,17 @@ Client that encrypts messages and sends them to the server
 import socket
 import json
 import numpy as np
-from cipher_utils import caesar_encrypt, hill_encrypt, vigenere_encrypt
+from cipher_utils import (
+    caesar_encrypt,
+    hill_encrypt,
+    vigenere_encrypt,
+    vernam_encrypt,
+    playfair_encrypt,
+    route_encrypt,
+    affine_encrypt,
+    rail_fence_encrypt,
+    columnar_encrypt,
+)
 
 
 def parse_hill_key(key_str):
@@ -50,6 +60,24 @@ def encrypt_message(message, cipher_type, key):
         
         elif cipher_type.lower() == 'vigenere':
             return vigenere_encrypt(message, key)
+
+        elif cipher_type.lower() == 'vernam':
+            return vernam_encrypt(message, key)
+
+        elif cipher_type.lower() == 'playfair':
+            return playfair_encrypt(message, key)
+
+        elif cipher_type.lower() == 'route':
+            return route_encrypt(message, key)
+
+        elif cipher_type.lower() == 'affine':
+            return affine_encrypt(message, key)
+
+        elif cipher_type.lower() == 'rail_fence':
+            return rail_fence_encrypt(message, key)
+
+        elif cipher_type.lower() == 'columnar':
+            return columnar_encrypt(message, key)
         
         else:
             raise ValueError(f"Unknown cipher type '{cipher_type}'")
@@ -121,7 +149,7 @@ def interactive_mode():
     print("=" * 50)
     print("Encrypted Message Client")
     print("=" * 50)
-    print("\nAvailable ciphers: caesar, hill, vigenere")
+    print("\nAvailable ciphers: caesar, hill, vigenere, vernam, playfair, route, affine, rail_fence, columnar")
     print("Type 'quit' to exit\n")
     
     host = input("Enter server host (default: localhost): ").strip() or 'localhost'
@@ -140,10 +168,10 @@ def interactive_mode():
             print("Message cannot be empty!")
             continue
         
-        cipher_type = input("Enter cipher type (caesar/hill/vigenere): ").strip().lower()
+        cipher_type = input("Enter cipher type (caesar/hill/vigenere/vernam/playfair/route/affine/rail_fence/columnar): ").strip().lower()
         
-        if cipher_type not in ['caesar', 'hill', 'vigenere']:
-            print("Invalid cipher type! Please choose: caesar, hill, or vigenere")
+        if cipher_type not in ['caesar', 'hill', 'vigenere', 'vernam', 'playfair', 'route', 'affine', 'rail_fence', 'columnar']:
+            print("Invalid cipher type! Please choose one of: caesar, hill, vigenere, vernam, playfair, route, affine, rail_fence, columnar")
             continue
         
         # Get key based on cipher type
@@ -171,6 +199,46 @@ def interactive_mode():
             if not key:
                 print("Key cannot be empty!")
                 continue
+
+        elif cipher_type == 'vernam':
+            key = input("Enter key string (letters): ").strip()
+            if not key:
+                print("Key cannot be empty!")
+                continue
+
+        elif cipher_type == 'playfair':
+            key = input("Enter key string: ").strip()
+            if not key:
+                print("Key cannot be empty!")
+                continue
+
+        elif cipher_type == 'route':
+            key_input = input("Enter column count (integer): ").strip()
+            try:
+                key = int(key_input)
+            except ValueError:
+                print("Invalid column count! Must be an integer.")
+                continue
+
+        elif cipher_type == 'affine':
+            key = input("Enter key as a,b (e.g. 5,8): ").strip()
+            if not key:
+                print("Key cannot be empty!")
+                continue
+
+        elif cipher_type == 'rail_fence':
+            key_input = input("Enter rails (integer >=2): ").strip()
+            try:
+                key = int(key_input)
+            except ValueError:
+                print("Invalid rails value! Must be an integer.")
+                continue
+
+        elif cipher_type == 'columnar':
+            key = input("Enter keyword (>=2 chars): ").strip()
+            if not key or len(key) < 2:
+                print("Key must be at least 2 characters!")
+                continue
         
         # Send message
         send_message(host, port, message, cipher_type, key)
@@ -186,6 +254,12 @@ if __name__ == '__main__':
             print("Example: python client.py 'Hello World' caesar 3")
             print("Example: python client.py 'Hello' hill '[[3,3],[2,5]]'")
             print("Example: python client.py 'Hello' vigenere 'KEY'")
+            print("Example: python client.py 'Hello' vernam 'SECRET'")
+            print("Example: python client.py 'HELLO' playfair 'MONARCHY'")
+            print("Example: python client.py 'Hello World' route 5")
+            print("Example: python client.py 'Hello' affine '5,8'")
+            print("Example: python client.py 'Hello World' rail_fence 3")
+            print("Example: python client.py 'Hello World' columnar 'ZEBRA'")
             sys.exit(1)
         
         message = sys.argv[1]
