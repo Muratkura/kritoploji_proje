@@ -52,6 +52,16 @@ function updateKeyInput(tab) {
         keyInput.type = 'text';
         keyInput.placeholder = 'Örn: ZEBRA';
         keyHint.textContent = 'Columnar için anahtar kelime girin (en az 2 karakter).';
+    } else if (cipherType === 'aes_library' || cipherType === 'aes_manual') {
+        keyLabel.textContent = 'Anahtar:';
+        keyInput.type = 'text';
+        keyInput.placeholder = 'AES anahtarı girin (örn: mySecretKey123)';
+        keyHint.textContent = 'AES için anahtar girin. Kütüphaneli: base64 çıktı, Kütüphanesiz: hex çıktı.';
+    } else if (cipherType === 'des_library' || cipherType === 'des_manual') {
+        keyLabel.textContent = 'Anahtar:';
+        keyInput.type = 'text';
+        keyInput.placeholder = 'DES anahtarı girin (örn: myKey123)';
+        keyHint.textContent = 'DES için anahtar girin. Kütüphaneli: base64 çıktı, Kütüphanesiz: hex çıktı.';
     }
 }
 
@@ -166,6 +176,18 @@ async function encryptMessage() {
             // Show result
             document.getElementById('encrypt-original').textContent = data.original_message;
             document.getElementById('encrypt-encrypted').textContent = data.encrypted_message;
+            
+            // Show execution time for AES and DES
+            const isAESorDES = cipherType.startsWith('aes_') || cipherType.startsWith('des_');
+            if (isAESorDES && data.execution_time_ms !== undefined) {
+                const timeElement = document.getElementById('encrypt-time');
+                const timeItem = document.getElementById('encrypt-time-item');
+                timeElement.textContent = data.execution_time_ms + ' ms';
+                timeItem.style.display = 'block';
+            } else {
+                document.getElementById('encrypt-time-item').style.display = 'none';
+            }
+            
             document.getElementById('encrypt-result').style.display = 'block';
             document.getElementById('encrypt-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             
@@ -240,6 +262,18 @@ async function decryptMessage() {
             // Show result
             document.getElementById('decrypt-encrypted').textContent = data.encrypted_message;
             document.getElementById('decrypt-decrypted').textContent = data.decrypted_message;
+            
+            // Show execution time for AES and DES
+            const isAESorDES = cipherType.startsWith('aes_') || cipherType.startsWith('des_');
+            if (isAESorDES && data.execution_time_ms !== undefined) {
+                const timeElement = document.getElementById('decrypt-time');
+                const timeItem = document.getElementById('decrypt-time-item');
+                timeElement.textContent = data.execution_time_ms + ' ms';
+                timeItem.style.display = 'block';
+            } else {
+                document.getElementById('decrypt-time-item').style.display = 'none';
+            }
+            
             document.getElementById('decrypt-result').style.display = 'block';
             document.getElementById('decrypt-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {

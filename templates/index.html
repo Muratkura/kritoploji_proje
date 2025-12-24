@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>🔐 Şifreleme ve Deşifreleme</h1>
-            <p class="subtitle">Caesar • Hill • Vigenere • Vernam • Playfair • Route • Affine • Rail Fence • Columnar</p>
+            <p class="subtitle">Caesar • Hill • Vigenere • Vernam • Playfair • Route • Affine • Rail Fence • Columnar • AES • DES</p>
         </header>
 
         <div class="main-content">
@@ -38,6 +38,10 @@
                         <option value="affine">Affine Şifresi</option>
                         <option value="rail_fence">Rail Fence Şifresi</option>
                         <option value="columnar">Columnar Şifresi</option>
+                        <option value="aes_library">AES (Kütüphaneli)</option>
+                        <option value="aes_manual">AES (Kütüphanesiz)</option>
+                        <option value="des_library">DES (Kütüphaneli)</option>
+                        <option value="des_manual">DES (Kütüphanesiz)</option>
                     </select>
                 </div>
 
@@ -59,6 +63,10 @@
                         <div class="result-item">
                             <strong>Şifrelenmiş:</strong>
                             <p id="encrypt-encrypted" class="encrypted-text"></p>
+                        </div>
+                        <div class="result-item" id="encrypt-time-item" style="display: none;">
+                            <strong>Şifreleme Süresi:</strong>
+                            <p id="encrypt-time" class="time-text"></p>
                         </div>
                     </div>
                 </div>
@@ -83,6 +91,10 @@
                         <option value="affine">Affine Şifresi</option>
                         <option value="rail_fence">Rail Fence Şifresi</option>
                         <option value="columnar">Columnar Şifresi</option>
+                        <option value="aes_library">AES (Kütüphaneli)</option>
+                        <option value="aes_manual">AES (Kütüphanesiz)</option>
+                        <option value="des_library">DES (Kütüphaneli)</option>
+                        <option value="des_manual">DES (Kütüphanesiz)</option>
                     </select>
                 </div>
 
@@ -104,6 +116,10 @@
                         <div class="result-item">
                             <strong>Deşifrelenmiş:</strong>
                             <p id="decrypt-decrypted"></p>
+                        </div>
+                        <div class="result-item" id="decrypt-time-item" style="display: none;">
+                            <strong>Deşifreleme Süresi:</strong>
+                            <p id="decrypt-time" class="time-text"></p>
                         </div>
                     </div>
                 </div>

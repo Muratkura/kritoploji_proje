@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, jsonify
 import numpy as np
 import json
 import re
+import time
 from cipher_utils import (
     caesar_encrypt, caesar_decrypt,
     hill_encrypt, hill_decrypt,
@@ -15,7 +16,11 @@ from cipher_utils import (
     route_encrypt, route_decrypt,
     affine_encrypt, affine_decrypt,
     rail_fence_encrypt, rail_fence_decrypt,
-    columnar_encrypt, columnar_decrypt
+    columnar_encrypt, columnar_decrypt,
+    aes_encrypt_library, aes_decrypt_library,
+    aes_encrypt_manual, aes_decrypt_manual,
+    des_encrypt_library, des_decrypt_library,
+    des_encrypt_manual, des_decrypt_manual
 )
 
 app = Flask(__name__)
@@ -125,6 +130,74 @@ def encrypt():
                 encrypted = columnar_encrypt(message, key)
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'aes_library':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for AES'}), 400
+            try:
+                start_time = time.perf_counter()
+                encrypted = aes_encrypt_library(message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'encrypted_message': encrypted,
+                    'original_message': message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'aes_manual':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for AES'}), 400
+            try:
+                start_time = time.perf_counter()
+                encrypted = aes_encrypt_manual(message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'encrypted_message': encrypted,
+                    'original_message': message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'des_library':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for DES'}), 400
+            try:
+                start_time = time.perf_counter()
+                encrypted = des_encrypt_library(message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'encrypted_message': encrypted,
+                    'original_message': message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'des_manual':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for DES'}), 400
+            try:
+                start_time = time.perf_counter()
+                encrypted = des_encrypt_manual(message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'encrypted_message': encrypted,
+                    'original_message': message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
         
         else:
             return jsonify({'error': f'Unknown cipher type: {cipher_type}'}), 400
@@ -218,6 +291,74 @@ def decrypt():
                 return jsonify({'error': 'Key cannot be empty for Columnar cipher'}), 400
             try:
                 decrypted = columnar_decrypt(encrypted_message, key)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'aes_library':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for AES'}), 400
+            try:
+                start_time = time.perf_counter()
+                decrypted = aes_decrypt_library(encrypted_message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'decrypted_message': decrypted,
+                    'encrypted_message': encrypted_message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'aes_manual':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for AES'}), 400
+            try:
+                start_time = time.perf_counter()
+                decrypted = aes_decrypt_manual(encrypted_message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'decrypted_message': decrypted,
+                    'encrypted_message': encrypted_message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'des_library':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for DES'}), 400
+            try:
+                start_time = time.perf_counter()
+                decrypted = des_decrypt_library(encrypted_message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'decrypted_message': decrypted,
+                    'encrypted_message': encrypted_message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'des_manual':
+            if not key:
+                return jsonify({'error': 'Key cannot be empty for DES'}), 400
+            try:
+                start_time = time.perf_counter()
+                decrypted = des_decrypt_manual(encrypted_message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'decrypted_message': decrypted,
+                    'encrypted_message': encrypted_message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
         
