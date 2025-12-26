@@ -11,7 +11,7 @@ try:
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import padding
-    from cryptography.hazmat.primitives.asymmetric import rsa, dsa, padding as asym_padding
+    from cryptography.hazmat.primitives.asymmetric import rsa, dsa, ec, padding as asym_padding
     from cryptography.hazmat.primitives import serialization, hashes
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
@@ -1764,4 +1764,189 @@ def dsa_decrypt_manual(ciphertext, private_key_pem):
         i += block_size
     
     return bytes(plaintext).decode('utf-8', errors='ignore')
+
+
+# ==================== ECC Implementation ====================
+
+def ecc_generate_keypair(curve_name='secp256r1'):
+    """
+    Generate ECC key pair.
+    curve_name: 'secp192r1', 'secp224r1', 'secp256r1', 'secp384r1', 'secp521r1'
+    Returns (public_key_pem, private_key_pem) as strings.
+    """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError("cryptography library is required for ECC")
+    
+    # Map curve names to EC curve objects
+    curve_map = {
+        'secp192r1': ec.SECP192R1(),
+        'secp224r1': ec.SECP224R1(),
+        'secp256r1': ec.SECP256R1(),
+        'secp384r1': ec.SECP384R1(),
+        'secp521r1': ec.SECP521R1(),
+    }
+    
+    if curve_name not in curve_map:
+        raise ValueError(f"Geçersiz eğri adı: {curve_name}. Desteklenen: {', '.join(curve_map.keys())}")
+    
+    # Generate private key
+    private_key = ec.generate_private_key(
+        curve_map[curve_name],
+        backend=default_backend()
+    )
+    
+    # Get public key
+    public_key = private_key.public_key()
+    
+    # Serialize to PEM format
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode('utf-8')
+    
+    public_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode('utf-8')
+    
+    return public_pem, private_pem
+
+
+def ecc_encrypt_library(text, public_key_pem):
+    """
+    ECC encryption using cryptography library.
+    Note: ECC is typically used for key exchange and signatures, 
+    but we'll use it with ECDH for encryption demonstration.
+    public_key_pem: Public key in PEM format (string)
+    Returns base64 encoded ciphertext.
+    """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError("cryptography library is required for ECC")
+    
+    if not public_key_pem:
+        raise ValueError("ECC için public key boş olamaz")
+    
+    # Clean and validate public key format
+    public_key_pem = public_key_pem.strip()
+    
+    # Check for proper PEM delimiters
+    if 'BEGIN PUBLIC KEY' not in public_key_pem or 'END PUBLIC KEY' not in public_key_pem:
+        raise ValueError("Geçersiz public key formatı: Public key BEGIN/END PUBLIC KEY sınırlayıcılarını içermelidir. Lütfen tüm satırları dahil olmak üzere anahtarın tamamını kopyaladığınızdan emin olun.")
+    
+    try:
+        # Load public key from PEM
+        public_key = serialization.load_pem_public_key(
+            public_key_pem.encode('utf-8'),
+            backend=default_backend()
+        )
+    except Exception as e:
+        raise ValueError(f"Geçersiz public key formatı: {str(e)}. Lütfen anahtarın PEM formatında olduğundan ve BEGIN/END sınırlayıcılarını içerdiğinden emin olun.")
+    
+    # Convert text to bytes
+    text_bytes = text.encode('utf-8')
+    
+    # ECC encryption using ECDH (Elliptic Curve Diffie-Hellman)
+    # Generate ephemeral key pair for this encryption
+    ephemeral_private = ec.generate_private_key(
+        public_key.curve,
+        backend=default_backend()
+    )
+    ephemeral_public = ephemeral_private.public_key()
+    
+    # Perform ECDH key exchange
+    shared_key = ephemeral_private.exchange(ec.ECDH(), public_key)
+    
+    # Derive encryption key from shared secret
+    import hashlib
+    derived_key = hashlib.sha256(shared_key).digest()
+    
+    # Use AES for actual encryption (hybrid encryption)
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    import os
+    aesgcm = AESGCM(derived_key)
+    nonce = os.urandom(12)
+    
+    # Encrypt the message
+    ciphertext = aesgcm.encrypt(nonce, text_bytes, None)
+    
+    # Combine ephemeral public key, nonce, and ciphertext
+    ephemeral_public_bytes = ephemeral_public.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    
+    # Encode to base64
+    combined = base64.b64encode(ephemeral_public_bytes + b'|||' + nonce + b'|||' + ciphertext).decode('utf-8')
+    
+    return combined
+
+
+def ecc_decrypt_library(ciphertext, private_key_pem):
+    """
+    ECC decryption using cryptography library.
+    private_key_pem: Private key in PEM format (string)
+    """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError("cryptography library is required for ECC")
+    
+    if not private_key_pem:
+        raise ValueError("ECC için private key boş olamaz")
+    
+    # Clean and validate private key format
+    private_key_pem = private_key_pem.strip()
+    
+    # Check for proper PEM delimiters
+    if 'BEGIN PRIVATE KEY' not in private_key_pem or 'END PRIVATE KEY' not in private_key_pem:
+        raise ValueError("Geçersiz private key formatı: Private key BEGIN/END PRIVATE KEY sınırlayıcılarını içermelidir. Lütfen tüm satırları dahil olmak üzere anahtarın tamamını kopyaladığınızdan emin olun.")
+    
+    try:
+        # Load private key from PEM
+        private_key = serialization.load_pem_private_key(
+            private_key_pem.encode('utf-8'),
+            password=None,
+            backend=default_backend()
+        )
+    except Exception as e:
+        raise ValueError(f"Geçersiz private key formatı: {str(e)}. Lütfen anahtarın PEM formatında olduğundan ve BEGIN/END sınırlayıcılarını içerdiğinden emin olun.")
+    
+    # Decode base64
+    try:
+        combined_bytes = base64.b64decode(ciphertext.encode('utf-8'))
+    except Exception:
+        raise ValueError("Geçersiz base64 şifreli metin")
+    
+    # Split ephemeral public key, nonce, and ciphertext
+    parts = combined_bytes.split(b'|||')
+    if len(parts) != 3:
+        raise ValueError("Geçersiz şifreli metin formatı")
+    
+    ephemeral_public_bytes, nonce, encrypted_data = parts
+    
+    # Load ephemeral public key
+    try:
+        ephemeral_public = serialization.load_pem_public_key(
+            ephemeral_public_bytes,
+            backend=default_backend()
+        )
+    except Exception:
+        raise ValueError("Geçersiz ephemeral public key formatı")
+    
+    # Perform ECDH key exchange
+    shared_key = private_key.exchange(ec.ECDH(), ephemeral_public)
+    
+    # Derive decryption key from shared secret
+    import hashlib
+    derived_key = hashlib.sha256(shared_key).digest()
+    
+    # Use AES for actual decryption
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    aesgcm = AESGCM(derived_key)
+    
+    try:
+        plaintext = aesgcm.decrypt(nonce, encrypted_data, None)
+    except Exception as e:
+        raise ValueError(f"Deşifreleme başarısız: {e}")
+    
+    return plaintext.decode('utf-8')
 

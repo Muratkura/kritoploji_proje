@@ -7,14 +7,18 @@ function updateKeyInput(tab) {
     
     const cipherType = cipherSelect.value;
     
-    // Hide RSA and DSA keygen buttons by default
+    // Hide RSA, DSA, and ECC keygen buttons by default
     const rsaKeygenGroup = document.getElementById(`${tab === 'encrypt' ? 'rsa-keygen-group' : 'rsa-keygen-group-decrypt'}`);
     const dsaKeygenGroup = document.getElementById(`${tab === 'encrypt' ? 'dsa-keygen-group' : 'dsa-keygen-group-decrypt'}`);
+    const eccKeygenGroup = document.getElementById(`${tab === 'encrypt' ? 'ecc-keygen-group' : 'ecc-keygen-group-decrypt'}`);
     if (rsaKeygenGroup) {
         rsaKeygenGroup.style.display = 'none';
     }
     if (dsaKeygenGroup) {
         dsaKeygenGroup.style.display = 'none';
+    }
+    if (eccKeygenGroup) {
+        eccKeygenGroup.style.display = 'none';
     }
     
     if (cipherType === 'caesar') {
@@ -101,6 +105,21 @@ function updateKeyInput(tab) {
         }
         if (dsaKeygenGroup) {
             dsaKeygenGroup.style.display = 'block';
+        }
+    } else if (cipherType === 'ecc_library') {
+        if (tab === 'encrypt') {
+            keyLabel.textContent = 'Public Key (PEM format):';
+            keyInput.placeholder = 'ECC public key\'i PEM formatında yapıştırın...';
+            keyHint.textContent = 'ECC şifreleme için public key gerekir. Anahtar çifti oluştur butonunu kullanabilirsiniz.';
+            keyInput.rows = 5;
+        } else {
+            keyLabel.textContent = 'Private Key (PEM format):';
+            keyInput.placeholder = 'ECC private key\'i PEM formatında yapıştırın...';
+            keyHint.textContent = 'ECC deşifreleme için private key gerekir. Anahtar çifti oluştur butonunu kullanabilirsiniz.';
+            keyInput.rows = 5;
+        }
+        if (eccKeygenGroup) {
+            eccKeygenGroup.style.display = 'block';
         }
     } else {
         keyInput.rows = 3;
@@ -219,9 +238,9 @@ async function encryptMessage() {
             document.getElementById('encrypt-original').textContent = data.original_message;
             document.getElementById('encrypt-encrypted').textContent = data.encrypted_message;
             
-            // Show execution time for AES, DES, RSA, and DSA
-            const isAESorDESorRSAorDSA = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType.startsWith('rsa_') || cipherType === 'dsa_library';
-            if (isAESorDESorRSAorDSA && data.execution_time_ms !== undefined) {
+            // Show execution time for AES, DES, RSA, DSA, and ECC
+            const isAESorDESorRSAorDSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType.startsWith('rsa_') || cipherType === 'dsa_library' || cipherType === 'ecc_library';
+            if (isAESorDESorRSAorDSAorECC && data.execution_time_ms !== undefined) {
                 const timeElement = document.getElementById('encrypt-time');
                 const timeItem = document.getElementById('encrypt-time-item');
                 timeElement.textContent = data.execution_time_ms + ' ms';
@@ -305,9 +324,9 @@ async function decryptMessage() {
             document.getElementById('decrypt-encrypted').textContent = data.encrypted_message;
             document.getElementById('decrypt-decrypted').textContent = data.decrypted_message;
             
-            // Show execution time for AES, DES, RSA, and DSA
-            const isAESorDESorRSAorDSA = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType.startsWith('rsa_') || cipherType === 'dsa_library';
-            if (isAESorDESorRSAorDSA && data.execution_time_ms !== undefined) {
+            // Show execution time for AES, DES, RSA, DSA, and ECC
+            const isAESorDESorRSAorDSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType.startsWith('rsa_') || cipherType === 'dsa_library' || cipherType === 'ecc_library';
+            if (isAESorDESorRSAorDSAorECC && data.execution_time_ms !== undefined) {
                 const timeElement = document.getElementById('decrypt-time');
                 const timeItem = document.getElementById('decrypt-time-item');
                 timeElement.textContent = data.execution_time_ms + ' ms';
@@ -542,6 +561,72 @@ async function generateDSAKeys(tab) {
                 // For decryption, use private key
                 keyInput.value = privateKey;
                 showSuccess('DSA anahtar çifti oluşturuldu! Private key anahtar alanına yapıştırıldı.');
+            }
+        } else {
+            showError(data.error || 'Anahtar çifti oluşturulamadı.');
+        }
+    } catch (error) {
+        showError('Ağ hatası: ' + error.message);
+    }
+}
+
+// Generate ECC key pair
+async function generateECCKeys(tab) {
+    hideError();
+    
+    try {
+        const response = await fetch('/api/ecc/generate-keys', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                curve_name: 'secp256r1'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            const keyInput = document.getElementById(`${tab}-key`);
+            const keyLabel = document.getElementById(`${tab}-key-label`);
+            
+            // Clean the keys to ensure proper format
+            const publicKey = data.public_key.trim();
+            const privateKey = data.private_key.trim();
+            
+            // Verify keys have proper PEM delimiters
+            if (!publicKey.includes('BEGIN PUBLIC KEY') || !publicKey.includes('END PUBLIC KEY')) {
+                showError('Oluşturulan public key formatı geçersiz.');
+                return;
+            }
+            
+            if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
+                showError('Oluşturulan private key formatı geçersiz.');
+                return;
+            }
+            
+            if (tab === 'encrypt') {
+                // For encryption, use public key
+                keyInput.value = publicKey;
+                showSuccess('ECC anahtar çifti oluşturuldu! Public key anahtar alanına yapıştırıldı.');
+                
+                // Store private key for later use
+                if (!document.getElementById('ecc-private-key-storage')) {
+                    const storage = document.createElement('textarea');
+                    storage.id = 'ecc-private-key-storage';
+                    storage.style.display = 'none';
+                    document.body.appendChild(storage);
+                }
+                document.getElementById('ecc-private-key-storage').value = privateKey;
+                
+                // Show private key in a modal-like display
+                showRSAKeyModal('Private Key (Deşifreleme için saklayın):', privateKey);
+                
+            } else {
+                // For decryption, use private key
+                keyInput.value = privateKey;
+                showSuccess('ECC anahtar çifti oluşturuldu! Private key anahtar alanına yapıştırıldı.');
             }
         } else {
             showError(data.error || 'Anahtar çifti oluşturulamadı.');

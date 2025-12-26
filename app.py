@@ -23,7 +23,8 @@ from cipher_utils import (
     des_encrypt_manual, des_decrypt_manual,
     rsa_generate_keypair, rsa_encrypt_library, rsa_decrypt_library,
     rsa_encrypt_manual, rsa_decrypt_manual,
-    dsa_generate_keypair, dsa_encrypt_library, dsa_decrypt_library
+    dsa_generate_keypair, dsa_encrypt_library, dsa_decrypt_library,
+    ecc_generate_keypair, ecc_encrypt_library, ecc_decrypt_library
 )
 
 app = Flask(__name__)
@@ -102,6 +103,28 @@ def generate_dsa_keys():
                 'public_key': public_key,
                 'private_key': private_key,
                 'key_size': key_size
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 400
+    
+    except Exception as e:
+        return jsonify({'error': f'Sunucu hatası: {str(e)}'}), 500
+
+
+@app.route('/api/ecc/generate-keys', methods=['POST'])
+def generate_ecc_keys():
+    """API endpoint for generating ECC key pair"""
+    try:
+        data = request.get_json() or {}
+        curve_name = data.get('curve_name', 'secp256r1')
+        
+        try:
+            public_key, private_key = ecc_generate_keypair(curve_name)
+            return jsonify({
+                'success': True,
+                'public_key': public_key,
+                'private_key': private_key,
+                'curve_name': curve_name
             })
         except Exception as e:
             return jsonify({'error': str(e)}), 400
@@ -531,6 +554,24 @@ def decrypt():
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
 
+        elif cipher_type == 'ecc_library':
+            # For ECC, key should be private key in PEM format
+            if not key:
+                return jsonify({'error': 'ECC için private key boş olamaz'}), 400
+            try:
+                start_time = time.perf_counter()
+                decrypted = ecc_decrypt_library(encrypted_message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'decrypted_message': decrypted,
+                    'encrypted_message': encrypted_message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+        
         else:
             return jsonify({'error': f'Bilinmeyen şifreleme türü: {cipher_type}'}), 400
         
