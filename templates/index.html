@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>🔐 Şifreleme ve Deşifreleme</h1>
-            <p class="subtitle">Caesar • Hill • Vigenere • Vernam • Playfair • Route • Affine • Rail Fence • Columnar • AES • DES</p>
+            <p class="subtitle">Caesar • Hill • Vigenere • Vernam • Playfair • Route • Affine • Rail Fence • Columnar • AES • DES • RSA</p>
         </header>
 
         <div class="main-content">
@@ -42,12 +42,19 @@
                         <option value="aes_manual">AES (Kütüphanesiz)</option>
                         <option value="des_library">DES (Kütüphaneli)</option>
                         <option value="des_manual">DES (Kütüphanesiz)</option>
+                        <option value="rsa_library">RSA (Kütüphaneli)</option>
+                        <option value="rsa_manual">RSA (Kütüphanesiz)</option>
                     </select>
+                </div>
+
+                <div class="form-group" id="rsa-keygen-group" style="display: none;">
+                    <button type="button" class="btn-secondary" onclick="generateRSAKeys('encrypt')">RSA Anahtar Çifti Oluştur</button>
+                    <small class="hint">RSA için önce anahtar çifti oluşturun, sonra public key'i kullanarak şifreleyin.</small>
                 </div>
 
                 <div class="form-group">
                     <label id="encrypt-key-label" for="encrypt-key">Kaydırma Değeri (Tam Sayı):</label>
-                    <input type="text" id="encrypt-key" placeholder="Anahtarı girin...">
+                    <textarea id="encrypt-key" rows="3" placeholder="Anahtarı girin..."></textarea>
                     <small id="encrypt-key-hint" class="hint">Tam sayı kaydırma değeri girin (örn: 3)</small>
                 </div>
 
@@ -95,12 +102,19 @@
                         <option value="aes_manual">AES (Kütüphanesiz)</option>
                         <option value="des_library">DES (Kütüphaneli)</option>
                         <option value="des_manual">DES (Kütüphanesiz)</option>
+                        <option value="rsa_library">RSA (Kütüphaneli)</option>
+                        <option value="rsa_manual">RSA (Kütüphanesiz)</option>
                     </select>
+                </div>
+
+                <div class="form-group" id="rsa-keygen-group-decrypt" style="display: none;">
+                    <button type="button" class="btn-secondary" onclick="generateRSAKeys('decrypt')">RSA Anahtar Çifti Oluştur</button>
+                    <small class="hint">RSA için önce anahtar çifti oluşturun, sonra private key'i kullanarak deşifreleyin.</small>
                 </div>
 
                 <div class="form-group">
                     <label id="decrypt-key-label" for="decrypt-key">Kaydırma Değeri (Tam Sayı):</label>
-                    <input type="text" id="decrypt-key" placeholder="Anahtarı girin...">
+                    <textarea id="decrypt-key" rows="3" placeholder="Anahtarı girin..."></textarea>
                     <small id="decrypt-key-hint" class="hint">Tam sayı kaydırma değeri girin (örn: 3)</small>
                 </div>
 

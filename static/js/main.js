@@ -7,61 +7,84 @@ function updateKeyInput(tab) {
     
     const cipherType = cipherSelect.value;
     
+    // Hide RSA keygen button by default
+    const rsaKeygenGroup = document.getElementById(`${tab === 'encrypt' ? 'rsa-keygen-group' : 'rsa-keygen-group-decrypt'}`);
+    if (rsaKeygenGroup) {
+        rsaKeygenGroup.style.display = 'none';
+    }
+    
     if (cipherType === 'caesar') {
         keyLabel.textContent = 'Kaydırma Değeri (Tam Sayı):';
-        keyInput.type = 'text';
         keyInput.placeholder = 'Kaydırma değeri girin (örn: 3)';
         keyHint.textContent = 'Tam sayı kaydırma değeri girin (örn: 3)';
+        keyInput.rows = 3;
     } else if (cipherType === 'hill') {
         keyLabel.textContent = 'Anahtar Matrisi (JSON):';
-        keyInput.type = 'text';
         keyInput.placeholder = '2x2 için [[3,3],[2,5]] veya 3x3 için [[1,2,3],[4,5,6],[7,8,9]]';
         keyHint.textContent = '2x2 veya 3x3 matrisi JSON dizisi olarak girin. Örnek: [[3,3],[2,5]]';
+        keyInput.rows = 3;
     } else if (cipherType === 'vigenere') {
         keyLabel.textContent = 'Anahtar Kelime:';
-        keyInput.type = 'text';
         keyInput.placeholder = 'Anahtar kelime girin (örn: ANAHTAR)';
         keyHint.textContent = 'Anahtar kelime dizisi girin (örn: ANAHTAR)';
+        keyInput.rows = 3;
     } else if (cipherType === 'vernam') {
         keyLabel.textContent = 'Anahtar (Harf Dizisi):';
-        keyInput.type = 'text';
         keyInput.placeholder = 'Örn: SECRET';
         keyHint.textContent = 'Harflerden oluşan bir anahtar girin. Harf dışı karakterler yok sayılır.';
+        keyInput.rows = 3;
     } else if (cipherType === 'playfair') {
         keyLabel.textContent = 'Anahtar Kelime:';
-        keyInput.type = 'text';
         keyInput.placeholder = 'Örn: MONARCHY';
         keyHint.textContent = 'Playfair için anahtar kelime girin (I/J birleştirilir).';
+        keyInput.rows = 3;
     } else if (cipherType === 'route') {
         keyLabel.textContent = 'Sütun Sayısı (Tam Sayı):';
-        keyInput.type = 'text';
         keyInput.placeholder = 'Örn: 5';
         keyHint.textContent = 'Route için sütun sayısı girin (örn: 5).';
+        keyInput.rows = 3;
     } else if (cipherType === 'affine') {
         keyLabel.textContent = 'Anahtar (a,b):';
-        keyInput.type = 'text';
         keyInput.placeholder = 'Örn: 5,8';
         keyHint.textContent = "Affine için 'a,b' girin. gcd(a,26)=1 olmalı (örn: 5,8).";
+        keyInput.rows = 3;
     } else if (cipherType === 'rail_fence') {
         keyLabel.textContent = 'Ray Sayısı (Tam Sayı):';
-        keyInput.type = 'text';
         keyInput.placeholder = 'Örn: 3';
         keyHint.textContent = 'Rail Fence için ray sayısı girin (>=2).';
+        keyInput.rows = 3;
     } else if (cipherType === 'columnar') {
         keyLabel.textContent = 'Anahtar Kelime:';
-        keyInput.type = 'text';
         keyInput.placeholder = 'Örn: ZEBRA';
         keyHint.textContent = 'Columnar için anahtar kelime girin (en az 2 karakter).';
+        keyInput.rows = 3;
     } else if (cipherType === 'aes_library' || cipherType === 'aes_manual') {
         keyLabel.textContent = 'Anahtar:';
-        keyInput.type = 'text';
         keyInput.placeholder = 'AES anahtarı girin (örn: mySecretKey123)';
         keyHint.textContent = 'AES için anahtar girin. Kütüphaneli: base64 çıktı, Kütüphanesiz: hex çıktı.';
+        keyInput.rows = 3;
     } else if (cipherType === 'des_library' || cipherType === 'des_manual') {
         keyLabel.textContent = 'Anahtar:';
-        keyInput.type = 'text';
         keyInput.placeholder = 'DES anahtarı girin (örn: myKey123)';
         keyHint.textContent = 'DES için anahtar girin. Kütüphaneli: base64 çıktı, Kütüphanesiz: hex çıktı.';
+        keyInput.rows = 3;
+    } else if (cipherType === 'rsa_library' || cipherType === 'rsa_manual') {
+        if (tab === 'encrypt') {
+            keyLabel.textContent = 'Public Key (PEM format):';
+            keyInput.placeholder = 'RSA public key\'i PEM formatında yapıştırın...';
+            keyHint.textContent = 'RSA şifreleme için public key gerekir. Anahtar çifti oluştur butonunu kullanabilirsiniz.';
+            keyInput.rows = 5;
+        } else {
+            keyLabel.textContent = 'Private Key (PEM format):';
+            keyInput.placeholder = 'RSA private key\'i PEM formatında yapıştırın...';
+            keyHint.textContent = 'RSA deşifreleme için private key gerekir. Anahtar çifti oluştur butonunu kullanabilirsiniz.';
+            keyInput.rows = 5;
+        }
+        if (rsaKeygenGroup) {
+            rsaKeygenGroup.style.display = 'block';
+        }
+    } else {
+        keyInput.rows = 3;
     }
 }
 
@@ -177,9 +200,9 @@ async function encryptMessage() {
             document.getElementById('encrypt-original').textContent = data.original_message;
             document.getElementById('encrypt-encrypted').textContent = data.encrypted_message;
             
-            // Show execution time for AES and DES
-            const isAESorDES = cipherType.startsWith('aes_') || cipherType.startsWith('des_');
-            if (isAESorDES && data.execution_time_ms !== undefined) {
+            // Show execution time for AES, DES, and RSA
+            const isAESorDESorRSA = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType.startsWith('rsa_');
+            if (isAESorDESorRSA && data.execution_time_ms !== undefined) {
                 const timeElement = document.getElementById('encrypt-time');
                 const timeItem = document.getElementById('encrypt-time-item');
                 timeElement.textContent = data.execution_time_ms + ' ms';
@@ -263,9 +286,9 @@ async function decryptMessage() {
             document.getElementById('decrypt-encrypted').textContent = data.encrypted_message;
             document.getElementById('decrypt-decrypted').textContent = data.decrypted_message;
             
-            // Show execution time for AES and DES
-            const isAESorDES = cipherType.startsWith('aes_') || cipherType.startsWith('des_');
-            if (isAESorDES && data.execution_time_ms !== undefined) {
+            // Show execution time for AES, DES, and RSA
+            const isAESorDESorRSA = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType.startsWith('rsa_');
+            if (isAESorDESorRSA && data.execution_time_ms !== undefined) {
                 const timeElement = document.getElementById('decrypt-time');
                 const timeItem = document.getElementById('decrypt-time-item');
                 timeElement.textContent = data.execution_time_ms + ' ms';
@@ -281,6 +304,165 @@ async function decryptMessage() {
         }
     } catch (error) {
         showError('Ağ hatası: ' + error.message);
+    }
+}
+
+// Generate RSA key pair
+async function generateRSAKeys(tab) {
+    hideError();
+    
+    try {
+        const response = await fetch('/api/rsa/generate-keys', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                key_size: 2048
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            const keyInput = document.getElementById(`${tab}-key`);
+            const keyLabel = document.getElementById(`${tab}-key-label`);
+            
+            // Clean the keys to ensure proper format
+            const publicKey = data.public_key.trim();
+            const privateKey = data.private_key.trim();
+            
+            // Verify keys have proper PEM delimiters
+            if (!publicKey.includes('BEGIN PUBLIC KEY') || !publicKey.includes('END PUBLIC KEY')) {
+                showError('Oluşturulan public key formatı geçersiz.');
+                return;
+            }
+            
+            if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
+                showError('Oluşturulan private key formatı geçersiz.');
+                return;
+            }
+            
+            if (tab === 'encrypt') {
+                // For encryption, use public key
+                keyInput.value = publicKey;
+                showSuccess('RSA anahtar çifti oluşturuldu! Public key anahtar alanına yapıştırıldı.');
+                
+                // Store private key for later use
+                if (!document.getElementById('rsa-private-key-storage')) {
+                    const storage = document.createElement('textarea');
+                    storage.id = 'rsa-private-key-storage';
+                    storage.style.display = 'none';
+                    document.body.appendChild(storage);
+                }
+                document.getElementById('rsa-private-key-storage').value = privateKey;
+                
+                // Show private key in a modal-like display
+                showRSAKeyModal('Private Key (Deşifreleme için saklayın):', privateKey);
+                
+            } else {
+                // For decryption, use private key
+                keyInput.value = privateKey;
+                showSuccess('RSA anahtar çifti oluşturuldu! Private key anahtar alanına yapıştırıldı.');
+            }
+        } else {
+            showError(data.error || 'Anahtar çifti oluşturulamadı.');
+        }
+    } catch (error) {
+        showError('Ağ hatası: ' + error.message);
+    }
+}
+
+// Show RSA key in a modal
+function showRSAKeyModal(title, key) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('rsa-key-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'rsa-key-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    `;
+    
+    modalContent.innerHTML = `
+        <h3 style="margin-bottom: 15px; color: #333;">${title}</h3>
+        <textarea id="rsa-key-display" readonly style="
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+            margin-bottom: 15px;
+        ">${key}</textarea>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="copyRSAKey()" class="btn-primary" style="flex: 1;">Kopyala</button>
+            <button onclick="closeRSAKeyModal()" class="btn-secondary" style="flex: 1;">Kapat</button>
+        </div>
+    `;
+    
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeRSAKeyModal();
+        }
+    });
+}
+
+// Copy RSA key to clipboard
+function copyRSAKey() {
+    const keyDisplay = document.getElementById('rsa-key-display');
+    keyDisplay.select();
+    keyDisplay.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        showSuccess('Private key kopyalandı!');
+    } catch (err) {
+        // Fallback for modern browsers
+        navigator.clipboard.writeText(keyDisplay.value).then(() => {
+            showSuccess('Private key kopyalandı!');
+        }).catch(() => {
+            showError('Kopyalama başarısız oldu. Lütfen manuel olarak kopyalayın.');
+        });
+    }
+}
+
+// Close RSA key modal
+function closeRSAKeyModal() {
+    const modal = document.getElementById('rsa-key-modal');
+    if (modal) {
+        modal.remove();
     }
 }
 

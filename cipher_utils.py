@@ -11,6 +11,8 @@ try:
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import padding
+    from cryptography.hazmat.primitives.asymmetric import rsa, padding as asym_padding
+    from cryptography.hazmat.primitives import serialization, hashes
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
     CRYPTOGRAPHY_AVAILABLE = False
@@ -1281,6 +1283,246 @@ def des_decrypt_manual(ciphertext, key):
         padding_len = plaintext[-1]
         if padding_len > 0 and padding_len <= 8:
             plaintext = plaintext[:-padding_len]
+    
+    return bytes(plaintext).decode('utf-8', errors='ignore')
+
+
+# ==================== RSA Implementation ====================
+
+def rsa_generate_keypair(key_size=2048):
+    """
+    Generate RSA key pair.
+    Returns (public_key_pem, private_key_pem) as strings.
+    """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError("cryptography library is required for RSA")
+    
+    # Generate private key
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=key_size,
+        backend=default_backend()
+    )
+    
+    # Get public key
+    public_key = private_key.public_key()
+    
+    # Serialize to PEM format
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode('utf-8')
+    
+    public_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode('utf-8')
+    
+    return public_pem, private_pem
+
+
+def rsa_encrypt_library(text, public_key_pem):
+    """
+    RSA encryption using cryptography library.
+    public_key_pem: Public key in PEM format (string)
+    Returns base64 encoded ciphertext.
+    """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError("cryptography library is required for RSA")
+    
+    if not public_key_pem:
+        raise ValueError("RSA için public key boş olamaz")
+    
+    # Clean and validate public key format
+    public_key_pem = public_key_pem.strip()
+    
+    # Check for proper PEM delimiters
+    if 'BEGIN PUBLIC KEY' not in public_key_pem or 'END PUBLIC KEY' not in public_key_pem:
+        raise ValueError("Geçersiz public key formatı: Public key BEGIN/END PUBLIC KEY sınırlayıcılarını içermelidir. Lütfen tüm satırları dahil olmak üzere anahtarın tamamını kopyaladığınızdan emin olun.")
+    
+    try:
+        # Load public key from PEM
+        public_key = serialization.load_pem_public_key(
+            public_key_pem.encode('utf-8'),
+            backend=default_backend()
+        )
+    except Exception as e:
+        raise ValueError(f"Geçersiz public key formatı: {str(e)}. Lütfen anahtarın PEM formatında olduğundan ve BEGIN/END sınırlayıcılarını içerdiğinden emin olun.")
+    
+    # Convert text to bytes
+    text_bytes = text.encode('utf-8')
+    
+    # RSA encryption with OAEP padding
+    ciphertext = public_key.encrypt(
+        text_bytes,
+        asym_padding.OAEP(
+            mgf=asym_padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    
+    # Encode to base64
+    return base64.b64encode(ciphertext).decode('utf-8')
+
+
+def rsa_decrypt_library(ciphertext, private_key_pem):
+    """
+    RSA decryption using cryptography library.
+    private_key_pem: Private key in PEM format (string)
+    """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError("cryptography library is required for RSA")
+    
+    if not private_key_pem:
+        raise ValueError("RSA için private key boş olamaz")
+    
+    # Clean and validate private key format
+    private_key_pem = private_key_pem.strip()
+    
+    # Check for proper PEM delimiters
+    if 'BEGIN PRIVATE KEY' not in private_key_pem or 'END PRIVATE KEY' not in private_key_pem:
+        # Try alternative formats
+        if 'BEGIN RSA PRIVATE KEY' not in private_key_pem or 'END RSA PRIVATE KEY' not in private_key_pem:
+            raise ValueError("Geçersiz private key formatı: Private key BEGIN/END PRIVATE KEY sınırlayıcılarını içermelidir. Lütfen tüm satırları dahil olmak üzere anahtarın tamamını kopyaladığınızdan emin olun.")
+    
+    try:
+        # Load private key from PEM
+        private_key = serialization.load_pem_private_key(
+            private_key_pem.encode('utf-8'),
+            password=None,
+            backend=default_backend()
+        )
+    except Exception as e:
+        raise ValueError(f"Geçersiz private key formatı: {str(e)}. Lütfen anahtarın PEM formatında olduğundan ve BEGIN/END sınırlayıcılarını içerdiğinden emin olun.")
+    
+    # Decode base64
+    try:
+        cipher_bytes = base64.b64decode(ciphertext.encode('utf-8'))
+    except Exception:
+        raise ValueError("Invalid base64 ciphertext")
+    
+    # RSA decryption with OAEP padding
+    try:
+        plaintext = private_key.decrypt(
+            cipher_bytes,
+            asym_padding.OAEP(
+                mgf=asym_padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+    except Exception as e:
+        raise ValueError(f"Deşifreleme başarısız: {e}")
+    
+    return plaintext.decode('utf-8')
+
+
+def rsa_encrypt_manual(text, public_key_pem):
+    """
+    RSA encryption without library (simplified manual implementation).
+    Note: This is a simplified version for educational purposes.
+    For production use, always use the library version.
+    public_key_pem: Public key in PEM format (string)
+    Returns base64 encoded ciphertext.
+    """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError("cryptography library is required for RSA key parsing")
+    
+    if not public_key_pem:
+        raise ValueError("RSA için public key boş olamaz")
+    
+    try:
+        # Load public key to get n and e
+        public_key = serialization.load_pem_public_key(
+            public_key_pem.encode('utf-8'),
+            backend=default_backend()
+        )
+        
+        # Get public key numbers
+        public_numbers = public_key.public_numbers()
+        n = public_numbers.n
+        e = public_numbers.e
+    except Exception as e:
+        raise ValueError(f"Geçersiz public key formatı: {e}")
+    
+    # Convert text to bytes
+    text_bytes = text.encode('utf-8')
+    
+    # RSA encryption: c = m^e mod n
+    # For simplicity, we'll encrypt each byte separately
+    # In real RSA, we'd use proper padding (OAEP/PKCS1)
+    ciphertext = []
+    for byte in text_bytes:
+        # Encrypt: c = byte^e mod n
+        c = pow(byte, e, n)
+        # Convert to bytes (big-endian)
+        ciphertext.extend(c.to_bytes((c.bit_length() + 7) // 8, 'big'))
+    
+    # Encode to base64
+    return base64.b64encode(bytes(ciphertext)).decode('utf-8')
+
+
+def rsa_decrypt_manual(ciphertext, private_key_pem):
+    """
+    RSA decryption without library (simplified manual implementation).
+    Note: This is a simplified version for educational purposes.
+    For production use, always use the library version.
+    private_key_pem: Private key in PEM format (string)
+    """
+    if not CRYPTOGRAPHY_AVAILABLE:
+        raise ImportError("cryptography library is required for RSA key parsing")
+    
+    if not private_key_pem:
+        raise ValueError("RSA için private key boş olamaz")
+    
+    try:
+        # Load private key to get n and d
+        private_key = serialization.load_pem_private_key(
+            private_key_pem.encode('utf-8'),
+            password=None,
+            backend=default_backend()
+        )
+        
+        # Get private key numbers
+        private_numbers = private_key.private_numbers()
+        n = private_numbers.public_numbers.n
+        d = private_numbers.d  # d is the private exponent
+    except Exception as e:
+        raise ValueError(f"Geçersiz private key formatı: {e}")
+    
+    # Decode base64
+    try:
+        cipher_bytes = base64.b64decode(ciphertext.encode('utf-8'))
+    except Exception:
+        raise ValueError("Invalid base64 ciphertext")
+    
+    # RSA decryption: m = c^d mod n
+    # This is a simplified version - in practice, proper padding is needed
+    plaintext = []
+    i = 0
+    key_size_bytes = (n.bit_length() + 7) // 8
+    
+    while i < len(cipher_bytes):
+        # Read a block
+        block = cipher_bytes[i:i+key_size_bytes]
+        if not block:
+            break
+        
+        # Convert block to integer
+        c = int.from_bytes(block, 'big')
+        
+        # Decrypt: m = c^d mod n
+        try:
+            m = pow(c, d, n)
+            # Convert back to byte
+            if m < 256:
+                plaintext.append(m)
+        except Exception:
+            pass
+        
+        i += key_size_bytes
     
     return bytes(plaintext).decode('utf-8', errors='ignore')
 

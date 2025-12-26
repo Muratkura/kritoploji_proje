@@ -20,7 +20,9 @@ from cipher_utils import (
     aes_encrypt_library, aes_decrypt_library,
     aes_encrypt_manual, aes_decrypt_manual,
     des_encrypt_library, des_decrypt_library,
-    des_encrypt_manual, des_decrypt_manual
+    des_encrypt_manual, des_decrypt_manual,
+    rsa_generate_keypair, rsa_encrypt_library, rsa_decrypt_library,
+    rsa_encrypt_manual, rsa_decrypt_manual
 )
 
 app = Flask(__name__)
@@ -49,6 +51,35 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/api/rsa/generate-keys', methods=['POST'])
+def generate_rsa_keys():
+    """API endpoint for generating RSA key pair"""
+    try:
+        data = request.get_json() or {}
+        key_size = data.get('key_size', 2048)
+        
+        try:
+            key_size = int(key_size)
+            if key_size not in [1024, 2048, 3072, 4096]:
+                return jsonify({'error': 'Anahtar boyutu 1024, 2048, 3072 veya 4096 olmalıdır'}), 400
+        except (ValueError, TypeError):
+                return jsonify({'error': 'Geçersiz anahtar boyutu. Tam sayı olmalıdır.'}), 400
+        
+        try:
+            public_key, private_key = rsa_generate_keypair(key_size)
+            return jsonify({
+                'success': True,
+                'public_key': public_key,
+                'private_key': private_key,
+                'key_size': key_size
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 400
+    
+    except Exception as e:
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+
 @app.route('/api/encrypt', methods=['POST'])
 def encrypt():
     """API endpoint for encryption"""
@@ -59,14 +90,14 @@ def encrypt():
         key = data.get('key', '')
         
         if not message:
-            return jsonify({'error': 'Message cannot be empty'}), 400
+            return jsonify({'error': 'Mesaj boş olamaz'}), 400
         
         if cipher_type == 'caesar':
             try:
                 shift = int(key)
                 encrypted = caesar_encrypt(message, shift)
             except ValueError:
-                return jsonify({'error': 'Invalid shift value. Must be an integer.'}), 400
+                return jsonify({'error': 'Geçersiz kaydırma değeri. Tam sayı olmalıdır.'}), 400
         
         elif cipher_type == 'hill':
             try:
@@ -77,7 +108,7 @@ def encrypt():
         
         elif cipher_type == 'vigenere':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Vigenere cipher'}), 400
+                return jsonify({'error': 'Vigenere şifresi için anahtar boş olamaz'}), 400
             try:
                 encrypted = vigenere_encrypt(message, key)
             except Exception as e:
@@ -85,7 +116,7 @@ def encrypt():
 
         elif cipher_type == 'vernam':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Vernam cipher'}), 400
+                return jsonify({'error': 'Vernam şifresi için anahtar boş olamaz'}), 400
             try:
                 encrypted = vernam_encrypt(message, key)
             except Exception as e:
@@ -93,7 +124,7 @@ def encrypt():
 
         elif cipher_type == 'playfair':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Playfair cipher'}), 400
+                return jsonify({'error': 'Playfair şifresi için anahtar boş olamaz'}), 400
             try:
                 encrypted = playfair_encrypt(message, key)
             except Exception as e:
@@ -101,7 +132,7 @@ def encrypt():
 
         elif cipher_type == 'route':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Route cipher'}), 400
+                return jsonify({'error': 'Route şifresi için anahtar boş olamaz'}), 400
             try:
                 encrypted = route_encrypt(message, key)
             except Exception as e:
@@ -109,7 +140,7 @@ def encrypt():
 
         elif cipher_type == 'affine':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Affine cipher'}), 400
+                return jsonify({'error': 'Affine şifresi için anahtar boş olamaz'}), 400
             try:
                 encrypted = affine_encrypt(message, key)
             except Exception as e:
@@ -117,7 +148,7 @@ def encrypt():
 
         elif cipher_type == 'rail_fence':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Rail Fence cipher'}), 400
+                return jsonify({'error': 'Rail Fence şifresi için anahtar boş olamaz'}), 400
             try:
                 encrypted = rail_fence_encrypt(message, key)
             except Exception as e:
@@ -125,7 +156,7 @@ def encrypt():
 
         elif cipher_type == 'columnar':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Columnar cipher'}), 400
+                return jsonify({'error': 'Columnar şifresi için anahtar boş olamaz'}), 400
             try:
                 encrypted = columnar_encrypt(message, key)
             except Exception as e:
@@ -133,7 +164,7 @@ def encrypt():
 
         elif cipher_type == 'aes_library':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for AES'}), 400
+                return jsonify({'error': 'AES için anahtar boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
                 encrypted = aes_encrypt_library(message, key)
@@ -150,7 +181,7 @@ def encrypt():
 
         elif cipher_type == 'aes_manual':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for AES'}), 400
+                return jsonify({'error': 'AES için anahtar boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
                 encrypted = aes_encrypt_manual(message, key)
@@ -167,7 +198,7 @@ def encrypt():
 
         elif cipher_type == 'des_library':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for DES'}), 400
+                return jsonify({'error': 'DES için anahtar boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
                 encrypted = des_encrypt_library(message, key)
@@ -184,10 +215,46 @@ def encrypt():
 
         elif cipher_type == 'des_manual':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for DES'}), 400
+                return jsonify({'error': 'DES için anahtar boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
                 encrypted = des_encrypt_manual(message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'encrypted_message': encrypted,
+                    'original_message': message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'rsa_library':
+            # For RSA, key should be public key in PEM format
+            if not key:
+                return jsonify({'error': 'RSA için public key boş olamaz'}), 400
+            try:
+                start_time = time.perf_counter()
+                encrypted = rsa_encrypt_library(message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'encrypted_message': encrypted,
+                    'original_message': message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'rsa_manual':
+            # For RSA, key should be public key in PEM format
+            if not key:
+                return jsonify({'error': 'RSA için public key boş olamaz'}), 400
+            try:
+                start_time = time.perf_counter()
+                encrypted = rsa_encrypt_manual(message, key)
                 end_time = time.perf_counter()
                 execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
                 return jsonify({
@@ -222,14 +289,14 @@ def decrypt():
         key = data.get('key', '')
         
         if not encrypted_message:
-            return jsonify({'error': 'Encrypted message cannot be empty'}), 400
+            return jsonify({'error': 'Şifrelenmiş mesaj boş olamaz'}), 400
         
         if cipher_type == 'caesar':
             try:
                 shift = int(key)
                 decrypted = caesar_decrypt(encrypted_message, shift)
             except ValueError:
-                return jsonify({'error': 'Invalid shift value. Must be an integer.'}), 400
+                return jsonify({'error': 'Geçersiz kaydırma değeri. Tam sayı olmalıdır.'}), 400
         
         elif cipher_type == 'hill':
             try:
@@ -240,7 +307,7 @@ def decrypt():
         
         elif cipher_type == 'vigenere':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Vigenere cipher'}), 400
+                return jsonify({'error': 'Vigenere şifresi için anahtar boş olamaz'}), 400
             try:
                 decrypted = vigenere_decrypt(encrypted_message, key)
             except Exception as e:
@@ -248,7 +315,7 @@ def decrypt():
 
         elif cipher_type == 'vernam':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Vernam cipher'}), 400
+                return jsonify({'error': 'Vernam şifresi için anahtar boş olamaz'}), 400
             try:
                 decrypted = vernam_decrypt(encrypted_message, key)
             except Exception as e:
@@ -256,7 +323,7 @@ def decrypt():
 
         elif cipher_type == 'playfair':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Playfair cipher'}), 400
+                return jsonify({'error': 'Playfair şifresi için anahtar boş olamaz'}), 400
             try:
                 decrypted = playfair_decrypt(encrypted_message, key)
             except Exception as e:
@@ -264,7 +331,7 @@ def decrypt():
 
         elif cipher_type == 'route':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Route cipher'}), 400
+                return jsonify({'error': 'Route şifresi için anahtar boş olamaz'}), 400
             try:
                 decrypted = route_decrypt(encrypted_message, key)
             except Exception as e:
@@ -272,7 +339,7 @@ def decrypt():
 
         elif cipher_type == 'affine':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Affine cipher'}), 400
+                return jsonify({'error': 'Affine şifresi için anahtar boş olamaz'}), 400
             try:
                 decrypted = affine_decrypt(encrypted_message, key)
             except Exception as e:
@@ -280,7 +347,7 @@ def decrypt():
 
         elif cipher_type == 'rail_fence':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Rail Fence cipher'}), 400
+                return jsonify({'error': 'Rail Fence şifresi için anahtar boş olamaz'}), 400
             try:
                 decrypted = rail_fence_decrypt(encrypted_message, key)
             except Exception as e:
@@ -288,7 +355,7 @@ def decrypt():
 
         elif cipher_type == 'columnar':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for Columnar cipher'}), 400
+                return jsonify({'error': 'Columnar şifresi için anahtar boş olamaz'}), 400
             try:
                 decrypted = columnar_decrypt(encrypted_message, key)
             except Exception as e:
@@ -296,7 +363,7 @@ def decrypt():
 
         elif cipher_type == 'aes_library':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for AES'}), 400
+                return jsonify({'error': 'AES için anahtar boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
                 decrypted = aes_decrypt_library(encrypted_message, key)
@@ -313,7 +380,7 @@ def decrypt():
 
         elif cipher_type == 'aes_manual':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for AES'}), 400
+                return jsonify({'error': 'AES için anahtar boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
                 decrypted = aes_decrypt_manual(encrypted_message, key)
@@ -330,7 +397,7 @@ def decrypt():
 
         elif cipher_type == 'des_library':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for DES'}), 400
+                return jsonify({'error': 'DES için anahtar boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
                 decrypted = des_decrypt_library(encrypted_message, key)
@@ -347,10 +414,46 @@ def decrypt():
 
         elif cipher_type == 'des_manual':
             if not key:
-                return jsonify({'error': 'Key cannot be empty for DES'}), 400
+                return jsonify({'error': 'DES için anahtar boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
                 decrypted = des_decrypt_manual(encrypted_message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'decrypted_message': decrypted,
+                    'encrypted_message': encrypted_message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'rsa_library':
+            # For RSA, key should be private key in PEM format
+            if not key:
+                return jsonify({'error': 'RSA için private key boş olamaz'}), 400
+            try:
+                start_time = time.perf_counter()
+                decrypted = rsa_decrypt_library(encrypted_message, key)
+                end_time = time.perf_counter()
+                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+                return jsonify({
+                    'success': True,
+                    'decrypted_message': decrypted,
+                    'encrypted_message': encrypted_message,
+                    'execution_time_ms': round(execution_time, 4)
+                })
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+
+        elif cipher_type == 'rsa_manual':
+            # For RSA, key should be private key in PEM format
+            if not key:
+                return jsonify({'error': 'RSA için private key boş olamaz'}), 400
+            try:
+                start_time = time.perf_counter()
+                decrypted = rsa_decrypt_manual(encrypted_message, key)
                 end_time = time.perf_counter()
                 execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
                 return jsonify({
