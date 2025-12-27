@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>🔐 Şifreleme ve Deşifreleme</h1>
-            <p class="subtitle">Caesar • Hill • Vigenere • Vernam • Playfair • Route • Affine • Rail Fence • Columnar • AES • DES • RSA • DSA • ECC</p>
+            <p class="subtitle">Caesar • Hill • Vigenere • Vernam • Playfair • Route • Affine • Rail Fence • Columnar • AES • DES • RSA • ECC</p>
         </header>
 
         <div class="main-content">
@@ -43,7 +43,6 @@
                         <option value="des_library">DES (Kütüphaneli)</option>
                         <option value="des_manual">DES (Kütüphanesiz)</option>
                         <option value="rsa_library">RSA</option>
-                        <option value="dsa_library">DSA</option>
                         <option value="ecc_library">ECC</option>
                     </select>
                 </div>
@@ -51,11 +50,6 @@
                 <div class="form-group" id="rsa-keygen-group" style="display: none;">
                     <button type="button" class="btn-secondary" onclick="generateRSAKeys('encrypt')">RSA Anahtar Çifti Oluştur</button>
                     <small class="hint">RSA için önce anahtar çifti oluşturun, sonra public key'i kullanarak şifreleyin.</small>
-                </div>
-
-                <div class="form-group" id="dsa-keygen-group" style="display: none;">
-                    <button type="button" class="btn-secondary" onclick="generateDSAKeys('encrypt')">DSA Anahtar Çifti Oluştur</button>
-                    <small class="hint">DSA için önce anahtar çifti oluşturun, sonra public key'i kullanarak şifreleyin.</small>
                 </div>
 
                 <div class="form-group" id="ecc-keygen-group" style="display: none;">
@@ -114,7 +108,6 @@
                         <option value="des_library">DES (Kütüphaneli)</option>
                         <option value="des_manual">DES (Kütüphanesiz)</option>
                         <option value="rsa_library">RSA</option>
-                        <option value="dsa_library">DSA</option>
                         <option value="ecc_library">ECC</option>
                     </select>
                 </div>
@@ -122,11 +115,6 @@
                 <div class="form-group" id="rsa-keygen-group-decrypt" style="display: none;">
                     <button type="button" class="btn-secondary" onclick="generateRSAKeys('decrypt')">RSA Anahtar Çifti Oluştur</button>
                     <small class="hint">RSA için önce anahtar çifti oluşturun, sonra private key'i kullanarak deşifreleyin.</small>
-                </div>
-
-                <div class="form-group" id="dsa-keygen-group-decrypt" style="display: none;">
-                    <button type="button" class="btn-secondary" onclick="generateDSAKeys('decrypt')">DSA Anahtar Çifti Oluştur</button>
-                    <small class="hint">DSA için önce anahtar çifti oluşturun, sonra private key'i kullanarak deşifreleyin.</small>
                 </div>
 
                 <div class="form-group" id="ecc-keygen-group-decrypt" style="display: none;">

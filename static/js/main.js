@@ -7,15 +7,11 @@ function updateKeyInput(tab) {
     
     const cipherType = cipherSelect.value;
     
-    // Hide RSA, DSA, and ECC keygen buttons by default
+    // Hide RSA and ECC keygen buttons by default
     const rsaKeygenGroup = document.getElementById(`${tab === 'encrypt' ? 'rsa-keygen-group' : 'rsa-keygen-group-decrypt'}`);
-    const dsaKeygenGroup = document.getElementById(`${tab === 'encrypt' ? 'dsa-keygen-group' : 'dsa-keygen-group-decrypt'}`);
     const eccKeygenGroup = document.getElementById(`${tab === 'encrypt' ? 'ecc-keygen-group' : 'ecc-keygen-group-decrypt'}`);
     if (rsaKeygenGroup) {
         rsaKeygenGroup.style.display = 'none';
-    }
-    if (dsaKeygenGroup) {
-        dsaKeygenGroup.style.display = 'none';
     }
     if (eccKeygenGroup) {
         eccKeygenGroup.style.display = 'none';
@@ -90,21 +86,6 @@ function updateKeyInput(tab) {
         }
         if (rsaKeygenGroup) {
             rsaKeygenGroup.style.display = 'block';
-        }
-    } else if (cipherType === 'dsa_library') {
-        if (tab === 'encrypt') {
-            keyLabel.textContent = 'Public Key (PEM format):';
-            keyInput.placeholder = 'DSA public key\'i PEM formatında yapıştırın...';
-            keyHint.textContent = 'DSA şifreleme için public key gerekir. Anahtar çifti oluştur butonunu kullanabilirsiniz.';
-            keyInput.rows = 5;
-        } else {
-            keyLabel.textContent = 'Private Key (PEM format):';
-            keyInput.placeholder = 'DSA private key\'i PEM formatında yapıştırın...';
-            keyHint.textContent = 'DSA deşifreleme için private key gerekir. Anahtar çifti oluştur butonunu kullanabilirsiniz.';
-            keyInput.rows = 5;
-        }
-        if (dsaKeygenGroup) {
-            dsaKeygenGroup.style.display = 'block';
         }
     } else if (cipherType === 'ecc_library') {
         if (tab === 'encrypt') {
@@ -238,9 +219,9 @@ async function encryptMessage() {
             document.getElementById('encrypt-original').textContent = data.original_message;
             document.getElementById('encrypt-encrypted').textContent = data.encrypted_message;
             
-            // Show execution time for AES, DES, RSA, DSA, and ECC
-            const isAESorDESorRSAorDSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType === 'rsa_library' || cipherType === 'dsa_library' || cipherType === 'ecc_library';
-            if (isAESorDESorRSAorDSAorECC && data.execution_time_ms !== undefined) {
+            // Show execution time for AES, DES, RSA, and ECC
+            const isAESorDESorRSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType === 'rsa_library' || cipherType === 'ecc_library';
+            if (isAESorDESorRSAorECC && data.execution_time_ms !== undefined) {
                 const timeElement = document.getElementById('encrypt-time');
                 const timeItem = document.getElementById('encrypt-time-item');
                 timeElement.textContent = data.execution_time_ms + ' ms';
@@ -324,9 +305,9 @@ async function decryptMessage() {
             document.getElementById('decrypt-encrypted').textContent = data.encrypted_message;
             document.getElementById('decrypt-decrypted').textContent = data.decrypted_message;
             
-            // Show execution time for AES, DES, RSA, DSA, and ECC
-            const isAESorDESorRSAorDSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType === 'rsa_library' || cipherType === 'dsa_library' || cipherType === 'ecc_library';
-            if (isAESorDESorRSAorDSAorECC && data.execution_time_ms !== undefined) {
+            // Show execution time for AES, DES, RSA, and ECC
+            const isAESorDESorRSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType === 'rsa_library' || cipherType === 'ecc_library';
+            if (isAESorDESorRSAorECC && data.execution_time_ms !== undefined) {
                 const timeElement = document.getElementById('decrypt-time');
                 const timeItem = document.getElementById('decrypt-time-item');
                 timeElement.textContent = data.execution_time_ms + ' ms';
@@ -501,72 +482,6 @@ function closeRSAKeyModal() {
     const modal = document.getElementById('rsa-key-modal');
     if (modal) {
         modal.remove();
-    }
-}
-
-// Generate DSA key pair
-async function generateDSAKeys(tab) {
-    hideError();
-    
-    try {
-        const response = await fetch('/api/dsa/generate-keys', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                key_size: 2048
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            const keyInput = document.getElementById(`${tab}-key`);
-            const keyLabel = document.getElementById(`${tab}-key-label`);
-            
-            // Clean the keys to ensure proper format
-            const publicKey = data.public_key.trim();
-            const privateKey = data.private_key.trim();
-            
-            // Verify keys have proper PEM delimiters
-            if (!publicKey.includes('BEGIN PUBLIC KEY') || !publicKey.includes('END PUBLIC KEY')) {
-                showError('Oluşturulan public key formatı geçersiz.');
-                return;
-            }
-            
-            if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
-                showError('Oluşturulan private key formatı geçersiz.');
-                return;
-            }
-            
-            if (tab === 'encrypt') {
-                // For encryption, use public key
-                keyInput.value = publicKey;
-                showSuccess('DSA anahtar çifti oluşturuldu! Public key anahtar alanına yapıştırıldı.');
-                
-                // Store private key for later use
-                if (!document.getElementById('dsa-private-key-storage')) {
-                    const storage = document.createElement('textarea');
-                    storage.id = 'dsa-private-key-storage';
-                    storage.style.display = 'none';
-                    document.body.appendChild(storage);
-                }
-                document.getElementById('dsa-private-key-storage').value = privateKey;
-                
-                // Show private key in a modal-like display
-                showRSAKeyModal('Private Key (Deşifreleme için saklayın):', privateKey);
-                
-            } else {
-                // For decryption, use private key
-                keyInput.value = privateKey;
-                showSuccess('DSA anahtar çifti oluşturuldu! Private key anahtar alanına yapıştırıldı.');
-            }
-        } else {
-            showError(data.error || 'Anahtar çifti oluşturulamadı.');
-        }
-    } catch (error) {
-        showError('Ağ hatası: ' + error.message);
     }
 }
 

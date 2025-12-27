@@ -22,7 +22,6 @@ from cipher_utils import (
     des_encrypt_library, des_decrypt_library,
     des_encrypt_manual, des_decrypt_manual,
     rsa_generate_keypair, rsa_encrypt_library, rsa_decrypt_library,
-    dsa_generate_keypair, dsa_encrypt_library, dsa_decrypt_library,
     ecc_generate_keypair, ecc_encrypt_library, ecc_decrypt_library
 )
 
@@ -68,35 +67,6 @@ def generate_rsa_keys():
         
         try:
             public_key, private_key = rsa_generate_keypair(key_size)
-            return jsonify({
-                'success': True,
-                'public_key': public_key,
-                'private_key': private_key,
-                'key_size': key_size
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)}), 400
-    
-    except Exception as e:
-        return jsonify({'error': f'Sunucu hatası: {str(e)}'}), 500
-
-
-@app.route('/api/dsa/generate-keys', methods=['POST'])
-def generate_dsa_keys():
-    """API endpoint for generating DSA key pair"""
-    try:
-        data = request.get_json() or {}
-        key_size = data.get('key_size', 2048)
-        
-        try:
-            key_size = int(key_size)
-            if key_size not in [1024, 2048, 3072]:
-                return jsonify({'error': 'DSA anahtar boyutu 1024, 2048 veya 3072 olmalıdır'}), 400
-        except (ValueError, TypeError):
-            return jsonify({'error': 'Geçersiz anahtar boyutu. Tam sayı olmalıdır.'}), 400
-        
-        try:
-            public_key, private_key = dsa_generate_keypair(key_size)
             return jsonify({
                 'success': True,
                 'public_key': public_key,
@@ -300,24 +270,6 @@ def encrypt():
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
 
-        elif cipher_type == 'dsa_library':
-            # For DSA, key should be public key in PEM format
-            if not key:
-                return jsonify({'error': 'DSA için public key boş olamaz'}), 400
-            try:
-                start_time = time.perf_counter()
-                encrypted = dsa_encrypt_library(message, key)
-                end_time = time.perf_counter()
-                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
-                return jsonify({
-                    'success': True,
-                    'encrypted_message': encrypted,
-                    'original_message': message,
-                    'execution_time_ms': round(execution_time, 4)
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 400
-
         elif cipher_type == 'ecc_library':
             # For ECC, key should be public key in PEM format
             if not key:
@@ -506,24 +458,6 @@ def decrypt():
             try:
                 start_time = time.perf_counter()
                 decrypted = rsa_decrypt_library(encrypted_message, key)
-                end_time = time.perf_counter()
-                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
-                return jsonify({
-                    'success': True,
-                    'decrypted_message': decrypted,
-                    'encrypted_message': encrypted_message,
-                    'execution_time_ms': round(execution_time, 4)
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 400
-
-        elif cipher_type == 'dsa_library':
-            # For DSA, key should be private key in PEM format
-            if not key:
-                return jsonify({'error': 'DSA için private key boş olamaz'}), 400
-            try:
-                start_time = time.perf_counter()
-                decrypted = dsa_decrypt_library(encrypted_message, key)
                 end_time = time.perf_counter()
                 execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
                 return jsonify({
