@@ -22,7 +22,6 @@ from cipher_utils import (
     des_encrypt_library, des_decrypt_library,
     des_encrypt_manual, des_decrypt_manual,
     rsa_generate_keypair, rsa_encrypt_library, rsa_decrypt_library,
-    rsa_encrypt_manual, rsa_decrypt_manual,
     dsa_generate_keypair, dsa_encrypt_library, dsa_decrypt_library,
     ecc_generate_keypair, ecc_encrypt_library, ecc_decrypt_library
 )
@@ -301,13 +300,13 @@ def encrypt():
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
 
-        elif cipher_type == 'rsa_manual':
-            # For RSA, key should be public key in PEM format
+        elif cipher_type == 'dsa_library':
+            # For DSA, key should be public key in PEM format
             if not key:
-                return jsonify({'error': 'RSA için public key boş olamaz'}), 400
+                return jsonify({'error': 'DSA için public key boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
-                encrypted = rsa_encrypt_manual(message, key)
+                encrypted = dsa_encrypt_library(message, key)
                 end_time = time.perf_counter()
                 execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
                 return jsonify({
@@ -319,13 +318,13 @@ def encrypt():
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
 
-        elif cipher_type == 'dsa_library':
-            # For DSA, key should be public key in PEM format
+        elif cipher_type == 'ecc_library':
+            # For ECC, key should be public key in PEM format
             if not key:
-                return jsonify({'error': 'DSA için public key boş olamaz'}), 400
+                return jsonify({'error': 'ECC için public key boş olamaz'}), 400
             try:
                 start_time = time.perf_counter()
-                encrypted = dsa_encrypt_library(message, key)
+                encrypted = ecc_encrypt_library(message, key)
                 end_time = time.perf_counter()
                 execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
                 return jsonify({
@@ -507,24 +506,6 @@ def decrypt():
             try:
                 start_time = time.perf_counter()
                 decrypted = rsa_decrypt_library(encrypted_message, key)
-                end_time = time.perf_counter()
-                execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
-                return jsonify({
-                    'success': True,
-                    'decrypted_message': decrypted,
-                    'encrypted_message': encrypted_message,
-                    'execution_time_ms': round(execution_time, 4)
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)}), 400
-
-        elif cipher_type == 'rsa_manual':
-            # For RSA, key should be private key in PEM format
-            if not key:
-                return jsonify({'error': 'RSA için private key boş olamaz'}), 400
-            try:
-                start_time = time.perf_counter()
-                decrypted = rsa_decrypt_manual(encrypted_message, key)
                 end_time = time.perf_counter()
                 execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
                 return jsonify({

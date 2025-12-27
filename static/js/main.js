@@ -76,7 +76,7 @@ function updateKeyInput(tab) {
         keyInput.placeholder = 'DES anahtarı girin (örn: myKey123)';
         keyHint.textContent = 'DES için anahtar girin. Kütüphaneli: base64 çıktı, Kütüphanesiz: hex çıktı.';
         keyInput.rows = 3;
-    } else if (cipherType === 'rsa_library' || cipherType === 'rsa_manual') {
+    } else if (cipherType === 'rsa_library') {
         if (tab === 'encrypt') {
             keyLabel.textContent = 'Public Key (PEM format):';
             keyInput.placeholder = 'RSA public key\'i PEM formatında yapıştırın...';
@@ -239,7 +239,7 @@ async function encryptMessage() {
             document.getElementById('encrypt-encrypted').textContent = data.encrypted_message;
             
             // Show execution time for AES, DES, RSA, DSA, and ECC
-            const isAESorDESorRSAorDSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType.startsWith('rsa_') || cipherType === 'dsa_library' || cipherType === 'ecc_library';
+            const isAESorDESorRSAorDSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType === 'rsa_library' || cipherType === 'dsa_library' || cipherType === 'ecc_library';
             if (isAESorDESorRSAorDSAorECC && data.execution_time_ms !== undefined) {
                 const timeElement = document.getElementById('encrypt-time');
                 const timeItem = document.getElementById('encrypt-time-item');
@@ -325,7 +325,7 @@ async function decryptMessage() {
             document.getElementById('decrypt-decrypted').textContent = data.decrypted_message;
             
             // Show execution time for AES, DES, RSA, DSA, and ECC
-            const isAESorDESorRSAorDSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType.startsWith('rsa_') || cipherType === 'dsa_library' || cipherType === 'ecc_library';
+            const isAESorDESorRSAorDSAorECC = cipherType.startsWith('aes_') || cipherType.startsWith('des_') || cipherType === 'rsa_library' || cipherType === 'dsa_library' || cipherType === 'ecc_library';
             if (isAESorDESorRSAorDSAorECC && data.execution_time_ms !== undefined) {
                 const timeElement = document.getElementById('decrypt-time');
                 const timeItem = document.getElementById('decrypt-time-item');
